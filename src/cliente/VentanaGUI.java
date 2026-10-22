@@ -80,7 +80,7 @@ public class VentanaGUI extends Application {
         // ---------- BITACORA ----------
         area.setEditable(false);
         area.setWrapText(true);
-        area.setPrefRowCount(10);
+        area.setPrefRowCount(8);
         area.setStyle("-fx-font-family: 'Consolas', monospace; -fx-font-size: 11px;");
         Label tituloBitacora = new Label("Bitacora de mensajes (broadcast del Campo de Datos)");
         VBox panelBitacora = new VBox(4, tituloBitacora, area);
@@ -94,7 +94,7 @@ public class VentanaGUI extends Application {
         raiz.setStyle("-fx-background-color: #f5f5f5;");
 
         stage.setTitle("Calculadora ADS - " + ClienteMain.miId + " (nodo en puerto " + ClienteMain.puertoNodo + ")");
-        stage.setScene(new Scene(raiz, 520, 700));
+        stage.setScene(new Scene(raiz, 500, 600));
         stage.setOnCloseRequest(e -> System.exit(0));
         stage.show();
 
@@ -107,7 +107,7 @@ public class VentanaGUI extends Application {
 
     private Button crearBoton(String etiqueta) {
         Button boton = new Button(etiqueta);
-        boton.setPrefSize(95, 52);
+        boton.setPrefSize(90, 44);
         String color = GRIS_NUMERO;
         String texto = "black";
         if (esOperador(etiqueta) || etiqueta.equals("=")) {
