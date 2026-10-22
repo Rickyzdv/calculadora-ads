@@ -21,26 +21,19 @@ public class Calculadora {
         return a / b;
     }
 
-    public static double calcular(double a, String operador, double b) {
-        switch (operador) {
-            case "+":
+    // Ahora recibe el servicio (SUM, SUB, MUL, DIV) en vez del simbolo
+    public static double calcular(String servicio, double a, double b) {
+        switch (servicio) {
+            case "SUM":
                 return sumar(a, b);
-            case "-":
+            case "SUB":
                 return restar(a, b);
-            case "*":
+            case "MUL":
                 return multiplicar(a, b);
-            case "/":
+            case "DIV":
                 return dividir(a, b);
             default:
-                throw new IllegalArgumentException("operador no valido: " + operador);
+                throw new IllegalArgumentException("servicio no valido: " + servicio);
         }
-    }
-
-    // TEMPORAL: solo para probar. Se borra cuando conectemos el servidor.
-    public static void main(String[] args) {
-        System.out.println(calcular(5, "+", 3));
-        System.out.println(calcular(5, "-", 3));
-        System.out.println(calcular(5, "*", 3));
-        System.out.println(calcular(5, "/", 3));
     }
 }

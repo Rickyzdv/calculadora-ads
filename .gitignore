@@ -1,4 +1,6 @@
 out/
 *.class
 datos/*.csv
+logs/
+lib/
 .idea/

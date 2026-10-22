@@ -1,119 +1,142 @@
 package cliente;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
+// Ventana de la celula GUI, en JavaFX.
+//
+// Diferencias con Swing:
+//   - Ya no hacemos "new VentanaGUI()" y setVisible(true). JavaFX arranca solo
+//     (Application.launch) y nos llama a start(Stage). Ahi armamos la ventana.
+//   - JFrame -> Stage + Scene, JLabel -> Label, JTextArea -> TextArea,
+//     GridLayout -> GridPane, y los paneles se apilan con VBox.
+//   - SwingUtilities.invokeLater -> Platform.runLater (misma idea: solo el hilo
+//     de la interfaz puede tocar la ventana).
+public class VentanaGUI extends Application {
 
-public class VentanaGUI extends JFrame {
-
-    private JLabel pantalla = new JLabel("0");
-    private JLabel etiquetaEstado = new JLabel(" ");
-    private JTextArea area = new JTextArea(10, 30);
+    private Label pantalla = new Label("0");
+    private Label etiquetaEstado = new Label(" ");
+    private Label etiquetaServidor = new Label(" ");
+    private TextArea area = new TextArea();
 
     private String primerNumero = "";
     private String segundoNumero = "";
     private String operador = "";
 
-    private static final Color FONDO = new Color(245, 245, 245);
-    private static final Color GRIS_NUMERO = new Color(250, 250, 250);
-    private static final Color NARANJA = new Color(255, 149, 0);
-    private static final Color GRIS_ACCION = new Color(210, 210, 210);
+    private static final String NARANJA = "#ff9500";
+    private static final String GRIS_NUMERO = "#fafafa";
+    private static final String GRIS_ACCION = "#d2d2d2";
 
-    public VentanaGUI(String titulo) {
-        setTitle("Calculadora distribuida - " + titulo);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout(0, 8));
-        getContentPane().setBackground(FONDO);
+    // Simbolos con escapes unicode para evitar problemas de codificacion: x y division
+    private static final String POR = "\u00D7";
+    private static final String ENTRE = "\u00F7";
+
+    @Override
+    public void start(Stage stage) {
 
         // ---------- PANTALLA ----------
-        JPanel panelPantalla = new JPanel(new BorderLayout());
-        panelPantalla.setBackground(Color.WHITE);
-        panelPantalla.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200)),
-                BorderFactory.createEmptyBorder(12, 16, 12, 16)));
+        pantalla.setStyle("-fx-font-size: 34px; -fx-font-weight: bold;");
+        etiquetaEstado.setStyle("-fx-font-size: 12px; -fx-text-fill: #828282;");
+        etiquetaServidor.setStyle("-fx-font-size: 11px; -fx-text-fill: #2e7d32;");
 
-        pantalla.setFont(new Font("Segoe UI", Font.BOLD, 34));
-        pantalla.setHorizontalAlignment(JLabel.RIGHT);
-
-        etiquetaEstado.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        etiquetaEstado.setForeground(new Color(130, 130, 130));
-        etiquetaEstado.setHorizontalAlignment(JLabel.RIGHT);
-
-        panelPantalla.add(etiquetaEstado, BorderLayout.NORTH);
-        panelPantalla.add(pantalla, BorderLayout.CENTER);
-        add(panelPantalla, BorderLayout.NORTH);
+        VBox panelPantalla = new VBox(2, etiquetaEstado, pantalla, etiquetaServidor);
+        panelPantalla.setAlignment(Pos.CENTER_RIGHT);
+        panelPantalla.setPadding(new Insets(12, 16, 12, 16));
+        panelPantalla.setStyle("-fx-background-color: white; -fx-border-color: #c8c8c8;");
 
         // ---------- BOTONES ----------
-        JPanel panelBotones = new JPanel(new GridLayout(5, 4, 6, 6));
-        panelBotones.setBackground(FONDO);
-        panelBotones.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+        GridPane panelBotones = new GridPane();
+        panelBotones.setHgap(6);
+        panelBotones.setVgap(6);
+        panelBotones.setPadding(new Insets(8, 10, 8, 10));
 
         String[] etiquetas = {
-                "C", "", "", "/",
-                "7", "8", "9", "*",
+                "C", "", "", ENTRE,
+                "7", "8", "9", POR,
                 "4", "5", "6", "-",
                 "1", "2", "3", "+",
                 "0", ".", "", "="
         };
 
-        for (String etiqueta : etiquetas) {
-            if (etiqueta.equals("")) {
-                JPanel vacio = new JPanel();
-                vacio.setBackground(FONDO);
-                panelBotones.add(vacio);
-                continue;
+        for (int i = 0; i < etiquetas.length; i++) {
+            if (etiquetas[i].equals("")) {
+                continue; // hueco vacio, igual que antes
             }
-            panelBotones.add(crearBoton(etiqueta));
+            int columna = i % 4;
+            int fila = i / 4;
+            panelBotones.add(crearBoton(etiquetas[i]), columna, fila);
         }
-
-        add(panelBotones, BorderLayout.CENTER);
 
         // ---------- BITACORA ----------
         area.setEditable(false);
-        area.setFont(new Font("Consolas", Font.PLAIN, 12));
-        area.setLineWrap(true);
-        area.setWrapStyleWord(true);
-        area.setBackground(new Color(252, 252, 252));
+        area.setWrapText(true);
+        area.setPrefRowCount(10);
+        area.setStyle("-fx-font-family: 'Consolas', monospace; -fx-font-size: 11px;");
+        Label tituloBitacora = new Label("Bitacora de mensajes (broadcast del Campo de Datos)");
+        VBox panelBitacora = new VBox(4, tituloBitacora, area);
+        panelBitacora.setPadding(new Insets(0, 10, 10, 10));
+        VBox.setVgrow(area, Priority.ALWAYS);
 
-        JScrollPane scroll = new JScrollPane(area);
-        scroll.setPreferredSize(new Dimension(380, 190));
-        scroll.setBorder(BorderFactory.createTitledBorder("Mensajes recibidos del middleware"));
-        add(scroll, BorderLayout.SOUTH);
+        // ---------- TODO JUNTO (de arriba hacia abajo) ----------
+        panelBotones.setAlignment(Pos.CENTER);
+        VBox raiz = new VBox(panelPantalla, panelBotones, panelBitacora);
+        VBox.setVgrow(panelBitacora, Priority.ALWAYS); // la bitacora se queda con el espacio que sobre
+        raiz.setStyle("-fx-background-color: #f5f5f5;");
 
-        setSize(420, 640);
-        setLocationRelativeTo(null);
+        stage.setTitle("Calculadora ADS - " + ClienteMain.miId + " (nodo en puerto " + ClienteMain.puertoNodo + ")");
+        stage.setScene(new Scene(raiz, 520, 700));
+        stage.setOnCloseRequest(e -> System.exit(0));
+        stage.show();
+
+        try {
+            ClienteMain.conectar(this);
+        } catch (Exception e) {
+            mostrarLinea("No se pudo conectar al nodo en el puerto " + ClienteMain.puertoNodo);
+        }
     }
 
-    private JButton crearBoton(String etiqueta) {
-        JButton boton = new JButton(etiqueta);
-        boton.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        boton.setFocusPainted(false);
-        boton.setBorder(BorderFactory.createLineBorder(new Color(215, 215, 215)));
-
-        if (etiqueta.equals("+") || etiqueta.equals("-")
-                || etiqueta.equals("*") || etiqueta.equals("/") || etiqueta.equals("=")) {
-            boton.setBackground(NARANJA);
-            boton.setForeground(Color.WHITE);
+    private Button crearBoton(String etiqueta) {
+        Button boton = new Button(etiqueta);
+        boton.setPrefSize(95, 52);
+        String color = GRIS_NUMERO;
+        String texto = "black";
+        if (esOperador(etiqueta) || etiqueta.equals("=")) {
+            color = NARANJA;
+            texto = "white";
         } else if (etiqueta.equals("C")) {
-            boton.setBackground(GRIS_ACCION);
-        } else {
-            boton.setBackground(GRIS_NUMERO);
+            color = GRIS_ACCION;
         }
-
-        boton.setOpaque(true);
-        boton.addActionListener(e -> presionar(etiqueta));
+        boton.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-background-color: " + color
+                + "; -fx-text-fill: " + texto + "; -fx-border-color: #d7d7d7;");
+        boton.setOnAction(e -> presionar(etiqueta));
         return boton;
+    }
+
+    private boolean esOperador(String t) {
+        return t.equals("+") || t.equals("-") || t.equals(POR) || t.equals(ENTRE);
+    }
+
+    // Boton de la calculadora -> Codigo de Contenido del servicio
+    private String servicioDe(String operador) {
+        if (operador.equals("+")) {
+            return "SUM";
+        } else if (operador.equals("-")) {
+            return "SUB";
+        } else if (operador.equals(POR)) {
+            return "MUL";
+        } else {
+            return "DIV";
+        }
     }
 
     private void presionar(String tecla) {
@@ -124,10 +147,11 @@ public class VentanaGUI extends JFrame {
             operador = "";
             pantalla.setText("0");
             etiquetaEstado.setText(" ");
+            etiquetaServidor.setText(" ");
             return;
         }
 
-        if (tecla.equals("+") || tecla.equals("-") || tecla.equals("*") || tecla.equals("/")) {
+        if (esOperador(tecla)) {
             if (primerNumero.equals("")) {
                 return;
             }
@@ -147,7 +171,8 @@ public class VentanaGUI extends JFrame {
                 double b = Double.parseDouble(segundoNumero);
                 etiquetaEstado.setText(primerNumero + " " + operador + " " + segundoNumero + " =");
                 pantalla.setText("esperando...");
-                ClienteMain.enviarOperacion(a, operador, b);
+                etiquetaServidor.setText(" ");
+                ClienteMain.enviarOperacion(a, servicioDe(operador), b);
             } catch (NumberFormatException ex) {
                 mostrarLinea("Numero invalido.");
             }
@@ -166,15 +191,21 @@ public class VentanaGUI extends JFrame {
         }
     }
 
-    // Se llama desde ClienteMain cuando llega un resultado propio
-    public void mostrarResultado(String resultado) {
-        SwingUtilities.invokeLater(() -> pantalla.setText(resultado));
+    // Se llama desde ClienteMain (hilo de red) cuando llega un resultado propio
+    public void mostrarResultado(String resultado, String servidor) {
+        Platform.runLater(() -> {
+            if (resultado.startsWith("ERROR")) {
+                // El texto completo del error no cabe en letra grande: va abajo, en chiquito
+                pantalla.setText("Error");
+                etiquetaServidor.setText(resultado + " (" + servidor + ")");
+            } else {
+                pantalla.setText(resultado);
+                etiquetaServidor.setText("Atendido por " + servidor);
+            }
+        });
     }
 
     public void mostrarLinea(String texto) {
-        SwingUtilities.invokeLater(() -> {
-            area.append(texto + "\n");
-            area.setCaretPosition(area.getDocument().getLength());
-        });
+        Platform.runLater(() -> area.appendText(texto + "\n"));
     }
 }
