@@ -1,4 +1,17 @@
-# Calculadora distribuida ADS
+# Distributed Calculator: ADS (mesh) version
+
+> 🇬🇧 **English summary.** Second iteration of my [distributed calculator](https://github.com/Rickyzdv/calculadora-distribuida), built in **Java** for the Distributed Computing course at Universidad Panamericana (2026). The central middleware is replaced by a **Data Field** of nodes connected in a **full mesh**: every message is **broadcast** across the mesh and identified by a **content code** (`SUM_REQ`, `SUM_RES`, …), so clients and servers never need to know about each other.
+>
+> - **Self-discovering mesh:** a new node only needs one contact; the `WELCOME` handshake gives it the rest of the network.
+> - **Decentralized unique IDs** (`origin-session-counter`) and duplicate suppression so broadcasts don't loop.
+> - **Specialized servers:** each server handles one operation (SUM, SUB, MUL or DIV).
+> - **JavaFX GUI** for clients and PowerShell scripts that start the whole system (4 nodes + 16 servers + 4 GUIs = 24 processes).
+>
+> *The detailed documentation below is in Spanish.*
+
+---
+
+## Calculadora distribuida ADS (documentación)
 
 Proyecto del segundo parcial de Cómputo Distribuido (UP, agosto-noviembre 2026). Es la calculadora del primer parcial adaptada a una **arquitectura ADS**. El middleware desaparece. En su lugar hay un **Campo de Datos** formado por nodos en malla completa, y la comunicación entre células es por **broadcast** con **Códigos de Contenido**.
 
